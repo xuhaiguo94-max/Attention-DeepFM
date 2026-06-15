@@ -1,4 +1,4 @@
-# CTR Prediction: DeepFM vs AttentionDeepFM
+# CTR: DeepFM vs AttentionDeepFM
 
 本项目实现并对比了两种用于广告点击率（CTR）预测的深度学习模型：经典的 **DeepFM** 与在原基础上进行创新升级的 **AttentionDeepFM**。模型均基于 TensorFlow 2 构建，并在真实的 Criteo 数据集上进行训练、评估与对比验证。
 
@@ -26,7 +26,7 @@
 * **FM 组件**：负责一阶特征的线性组合与二阶特征交叉。
 * **Deep 组件**：将二阶 Embedding 特征直接拼接（Concat），送入多层全连接网络，以隐式方式学习高阶非线性特征交互。
 
-### 2. 增强版 AttentionDeepFM
+### 2. 创新版 AttentionDeepFM
 在 `AttentionDeepFM.py` 中，为了解决传统 DNN 提取高阶特征时缺乏针对性交互的问题，引入了**多头自注意力网络拓扑**：
 * **特征堆叠**：将所有特征的 Embedding 向量堆叠为三维张量。
 * **多头自注意力计算**：在送入 DNN 之前，先让不同领域的特征（Fields）通过自注意力机制相互“关注”，显式计算并赋予不同特征组合不同的权重关联。
