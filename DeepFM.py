@@ -108,7 +108,6 @@ class DeepFM(Model):
             history['val_auc'].append(val_auc)
             history['val_acc'].append(val_acc)
 
-            # 打印中加入准确率 acc
             time_taken = time.time() - start_time
             print(f"Epoch {epoch+1}/{epochs} [{time_taken:.1f}s] - "
                   f"loss: {train_loss:.4f} - auc: {train_auc:.4f} - acc: {train_acc:.4f} | "
