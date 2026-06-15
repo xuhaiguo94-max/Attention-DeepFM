@@ -21,7 +21,7 @@ class CriteoDataset:
         self.target = data.iloc[:, 0].values.astype(np.float32)
         features = data.iloc[:, 1:].copy()
         
-        # 及时清理原始 data 释放几百 MB 内存
+        # 及时清理原始 data 释放内存
         del data
         gc.collect()
 
@@ -40,8 +40,7 @@ class CriteoDataset:
         cat_cols = features.columns[13:]
         for col in cat_cols:
             features[col] = features[col].fillna('-1').astype('category').cat.codes.astype(np.int32)
-
-        # ================= 核心优化：直接在内存中构建好 Xi 和 Xv =================
+            
         # 连续特征的 Index 全部补 0
         Xi_cont = np.zeros(cont_vals.shape, dtype=np.int32)
         Xi_cat = features[cat_cols].values.astype(np.int32)
