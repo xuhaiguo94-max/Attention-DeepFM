@@ -20,11 +20,10 @@ class AttentionDeepFM(Model):
         self.fm_first_order_embeddings = [layers.Embedding(input_dim=feat_size, output_dim=1) for feat_size in self.feature_sizes]
         self.fm_second_order_embeddings = [layers.Embedding(input_dim=feat_size, output_dim=self.embedding_size) for feat_size in self.feature_sizes]
         
-        # ========== 【创新点核心】引入多头自注意力层 ==========
+        # ========== 引入多头自注意力层 ==========
         self.attention_layer = layers.MultiHeadAttention(num_heads=num_heads, key_dim=self.embedding_size)
         self.attention_norm = layers.LayerNormalization()
         self.attention_dropout = layers.Dropout(0.5)
-        # ====================================================
 
         self.deep_layers = []
         for i, dim in enumerate(hidden_dims):
@@ -38,7 +37,7 @@ class AttentionDeepFM(Model):
     def call(self, inputs, training=False):
         Xi, Xv = inputs
 
-        # 第一阶 (不变)
+        # 第一阶 
         fm_first_order_emb_arr = []
         for i, emb in enumerate(self.fm_first_order_embeddings):
             xi_slice = Xi[:, i, 0] 
@@ -46,20 +45,20 @@ class AttentionDeepFM(Model):
             fm_first_order_emb_arr.append(emb_out * Xv[:, i, :])
         fm_first_order = tf.concat(fm_first_order_emb_arr, axis=1)
 
-        # 第二阶 Embedding 提取 (不变)
+        # 第二阶 Embedding 提取
         fm_second_order_emb_arr = []
         for i, emb in enumerate(self.fm_second_order_embeddings):
             xi_slice = Xi[:, i, 0]
             emb_out = tf.reduce_sum(emb(xi_slice), axis=1) if len(emb(xi_slice).shape) > 2 else emb(xi_slice)
             fm_second_order_emb_arr.append(emb_out * Xv[:, i, :])
 
-        # FM 组件交叉 (不变)
+        # FM 组件交叉
         fm_sum_second_order_emb = tf.add_n(fm_second_order_emb_arr)
         fm_sum_second_order_emb_square = tf.square(fm_sum_second_order_emb)
         fm_second_order_emb_square_sum = tf.add_n([tf.square(item) for item in fm_second_order_emb_arr])
         fm_second_order = (fm_sum_second_order_emb_square - fm_second_order_emb_square_sum) * 0.5
         
-        # ========== 【创新点核心】注意力网络拓扑 ==========
+        # ========== 注意力网络拓扑 ==========
         # 1. 将 list 堆叠为三维张量: (Batch, Num_Fields, Embedding_Size)
         emb_stack = tf.stack(fm_second_order_emb_arr, axis=1)
         
@@ -84,10 +83,9 @@ class AttentionDeepFM(Model):
         total_sum = tf.reduce_sum(fm_first_order, axis=1) + tf.reduce_sum(fm_second_order, axis=1) + tf.reduce_sum(deep_out, axis=1) + self.bias_weight[0]
         return total_sum
 
-    # fit_model 函数保持完全不变... (直接拷贝你原有的 fit_model 代码即可)
+    # fit_model 函数
     def fit_model(self, loader_train, loader_val, optimizer, epochs=5):
         criterion = tf.keras.losses.BinaryCrossentropy(from_logits=True)
-        # 新增 train_acc 和 val_acc 的记录
         history = {'train_loss': [], 'val_loss': [], 'train_auc': [], 'val_auc': [], 'train_acc': [], 'val_acc': []}
 
         for epoch in range(epochs):
@@ -138,8 +136,6 @@ class AttentionDeepFM(Model):
             history['val_loss'].append(val_loss)
             history['val_auc'].append(val_auc)
             history['val_acc'].append(val_acc)
-
-            # 打印中加入准确率 acc
             time_taken = time.time() - start_time
             print(f"Epoch {epoch+1}/{epochs} [{time_taken:.1f}s] - "
                   f"loss: {train_loss:.4f} - auc: {train_auc:.4f} - acc: {train_acc:.4f} | "
